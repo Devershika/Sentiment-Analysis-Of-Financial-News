@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Sentiment Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            min-height: 120px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.positive {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border-left: 5px solid #00c851;
+        }
+
+        .result.negative {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-left: 5px solid #ff4444;
+        }
+
+        .result.neutral {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-left: 5px solid #ffbb33;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .sentiment-label {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .confidence-badge {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .scores {
+            margin-top: 15px;
+        }
+
+        .score-item {
+            margin-bottom: 12px;
+        }
+
+        .score-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-positive { background: #00c851; }
+        .progress-negative { background: #ff4444; }
+        .progress-neutral { background: #ffbb33; }
+
+        .error {
+            display: none;
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #c62828;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .examples h3 {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .example-chip {
+            display: inline-block;
+            background: #f5f5f5;
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-chip:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .api-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .api-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .api-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Financial Sentiment Analyzer</h1>
+        <p class="subtitle">Analyze the sentiment of financial news using AI</p>
+
+        <div id="apiStatus" class="api-status disconnected">
+            Connecting to API...
+        </div>
+
+        <div class="input-group">
+            <label for="newsText">Enter Financial News Text</label>
+            <textarea 
+                id="newsText" 
+                placeholder="e.g., Company reports record quarterly profits with strong revenue growth..."
+            ></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="analyzeSentiment()" id="analyzeBtn">
+                🔍 Analyze Sentiment
+            </button>
+            <button class="btn-secondary" onclick="clearAll()">
+                🗑️ Clear
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing sentiment...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <div class="result-header">
+                <div class="sentiment-label" id="sentimentLabel"></div>
+                <div class="confidence-badge" id="confidenceBadge"></div>
+            </div>
+            
+            <div class="scores">
+                <div class="score-item">
+                    <div class="score-label">
+                        <span>Positive</span>
+                        <span id="positiveScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-positive" id="positiveBar"></div>
+                    </div>
+                </div>
+
+                <div class="score-item">
+                    <div class="score-label">
+                        <span>Negative</span>
+                        <span id="negativeScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-negative" id="negativeBar"></div>
+                    </div>
+                </div>
+
+                <div class="score-item">
+                    <div class="score-label">
+                        <span>Neutral</span>
+                        <span id="neutralScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-neutral" id="neutralBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="examples">
+            <h3>💡 Try these examples:</h3>
+            <span class="example-chip" onclick="useExample(0)">Record profits reported</span>
+            <span class="example-chip" onclick="useExample(1)">Stock prices plummet</span>
+            <span class="example-chip" onclick="useExample(2)">Earnings meet expectations</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION - UPDATE THIS WITH YOUR API URL
+        // ============================================
+        const API_URL = 'http://localhost:5000';  // Change to your AWS URL after deployment
+        
+        // Example texts
+        const examples = [
+            "Company reports record-breaking quarterly profits with revenue exceeding analyst expectations by 25%",
+            "Stock prices plummet 40% following disappointing earnings report and bankruptcy concerns",
+            "Quarterly earnings meet analyst expectations with steady growth in key market segments"
+        ];
+
+        // Check API connection on load
+        window.addEventListener('load', checkAPIConnection);
+
+        async function checkAPIConnection() {
+            const statusDiv = document.getElementById('apiStatus');
+            try {
+                const response = await fetch(`${API_URL}/health`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Connected to API';
+                    statusDiv.className = 'api-status connected';
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Not connected to API. Make sure the Flask server is running.';
+                statusDiv.className = 'api-status disconnected';
+            }
+        }
+
+        async function analyzeSentiment() {
+            const textArea = document.getElementById('newsText');
+            const text = textArea.value.trim();
+            
+            // Validation
+            if (!text) {
+                showError('Please enter some text to analyze');
+                return;
+            }
+
+            if (text.length < 10) {
+                showError('Please enter at least 10 characters');
+                return;
+            }
+
+            // Hide previous results and errors
+            hideError();
+            hideResult();
+
+            // Show loading
+            showLoading();
+            document.getElementById('analyzeBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to analyze sentiment');
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.result) {
+                    displayResult(data.result);
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'Failed to analyze sentiment. Please try again.');
+            } finally {
+                hideLoading();
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        function displayResult(result) {
+            const resultDiv = document.getElementById('result');
+            const sentiment = result.sentiment.toLowerCase();
+            
+            // Update sentiment label and confidence
+            document.getElementById('sentimentLabel').textContent = result.sentiment;
+            document.getElementById('confidenceBadge').textContent = 
+                `${(result.confidence * 100).toFixed(1)}% confident`;
+
+            // Update scores
+            const scores = result.confidence_scores;
+            updateScore('positive', scores.positive || 0);
+            updateScore('negative', scores.negative || 0);
+            updateScore('neutral', scores.neutral || 0);
+
+            // Set result class
+            resultDiv.className = `result active ${sentiment}`;
+        }
+
+        function updateScore(type, value) {
+            const percentage = (value * 100).toFixed(1);
+            document.getElementById(`${type}Score`).textContent = `${percentage}%`;
+            document.getElementById(`${type}Bar`).style.width = `${percentage}%`;
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.remove('active');
+        }
+
+        function hideResult() {
+            document.getElementById('result').classList.remove('active');
+        }
+
+        function clearAll() {
+            document.getElementById('newsText').value = '';
+            hideResult();
+            hideError();
+        }
+
+        function useExample(index) {
+            document.getElementById('newsText').value = examples[index];
+            hideResult();
+            hideError();
+        }
+
+        // Allow Enter key to submit (with Shift+Enter for new line)
+        document.getElementById('newsText').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                analyzeSentiment();
+            }
+        });
+    </script>
+</body>
+</html>
