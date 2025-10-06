@@ -1,0 +1,27 @@
+        fastapi
+        uvicorn
+        python-dotenv
+        pandas
+        numpy
+        scikit-learn
+        xgboost
+        transformers
+        torch
+        nltk
+        textblob
+        beautifulsoup4
+        newspaper3k
+        requests
+        aiohttp
+        matplotlib
+        seaborn
+        plotly
+        boto3
+        joblib
+        statsmodels
+        yfinance
+        pytest
+        black
+        flake8
+   
+
