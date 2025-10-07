@@ -91,7 +91,7 @@ def predict_sentiment(text):
 @app.route('/')
 def home():
     """Serve frontend"""
-    return send_file('templates\index.html')
+    return send_file('templates/index.html')
 
 @app.route('/api')
 def api_info():
