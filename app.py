@@ -91,7 +91,7 @@ def predict_sentiment(text):
 @app.route('/')
 def home():
     """Serve frontend"""
-    return send_file('index.html')
+    return send_file('templates\index.html')
 
 @app.route('/api')
 def api_info():
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     if not load_models():
-        print("\n❌ Failed to load models. Exiting...")
+        print("\nFailed to load models. Exiting...")
         exit(1)
     
     print("\n✅ Models loaded successfully!")
